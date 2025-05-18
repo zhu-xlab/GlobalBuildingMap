@@ -35,16 +35,16 @@ if (modelType == 'fcdense'):
 if (modelType == 'efficientunet'):
     modelSuffix = '_EB0'
     if (prodType == 'SR'):
-        modelFilename = '/data/shi/planet/global/models/efficientunetb0_sr.pth'
+        modelFilename = '../models/efficientunetb0_sr.pth'
     else:
-        modelFilename = '/data/shi/planet/global/models/efficientunetb0_bm.pth'
+        modelFilename = '../models/efficientunetb0_bm.pth'
 
 if (modelType == 'ggcn'):
     modelSuffix = '_GGCN'
     if (prodType == 'SR'):
-        modelFilename = '/data/shi/planet/global/models/ggcn_fcdensenet67_sr.pth'
+        modelFilename = '../models/ggcn_fcdensenet67_sr.pth'
     else:
-        modelFilename = '/data/shi/planet/global/models/ggcn_fcdensenet67_bm.pth'
+        modelFilename = '../models/ggcn_fcdensenet67_bm.pth'
 
 gpuRank = 1
 satImg = 'your_satellite_image.tif'
