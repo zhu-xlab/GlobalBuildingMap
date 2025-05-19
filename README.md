@@ -7,6 +7,13 @@ GlobalBuildingMap (GBM): the highest accuracy and highest resolution global buil
 Visual comparison of building footprints from different data sources in Cairo, Egypt. The three building footprint layers from GBM (purple), Google (cyan) and OSM (yellow) are overlaid with high-resolution aerial image. Two selected areas, i.e., dense area/informal
 settlement (orange) and non-dense area (green) are zoomed in. Each area has three subfigures, which show the corresponding high-resolution aerial image as reference (left), GBM overlaid with satellite image (mid) and Google overlaid with satellite image (right). Background images © Google Maps.
 
+## Installation
+
+All Python libraries needed to use this code can be installed using:
+```
+pip install -r requirements.txt
+```
+
 ## Training
 please define data directory, checkpoint directory and log directory before running following command
 ```

@@ -1,0 +1,7 @@
+gdal
+h5py
+numpy
+opencv-python
+scikit-learn
+scipy
+torch
