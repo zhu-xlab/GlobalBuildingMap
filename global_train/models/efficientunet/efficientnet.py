@@ -1,10 +1,19 @@
+import torch
+from torch import nn
 from torch.hub import load_state_dict_from_url
-from .utils import *
+from torch.nn import functional as F
+
+from .layers import BatchNorm2d, Conv2dSamePadding, MBConvBlock, Swish, custom_head
+from .utils import (
+    IMAGENET_WEIGHTS,
+    get_efficientnet_params,
+    round_filters,
+    round_repeats,
+)
 
 
 class EfficientNet(nn.Module):
-
-    def __init__(self, in_channels,block_args_list, global_params):
+    def __init__(self, in_channels, block_args_list, global_params):
         super().__init__()
 
         self.block_args_list = block_args_list
@@ -15,31 +24,38 @@ class EfficientNet(nn.Module):
         batch_norm_epsilon = self.global_params.batch_norm_epsilon
 
         # Stem
-        
-        out_channels = round_filters(32, self.global_params)
-        self._conv_stem = Conv2dSamePadding(in_channels,
-                                            out_channels,
-                                            kernel_size=3,
-                                            stride=2,
-                                            bias=False,
-                                            name='stem_conv')
-        self._bn0 = BatchNorm2d(num_features=out_channels,
-                                momentum=batch_norm_momentum,
-                                eps=batch_norm_epsilon,
-                                name='stem_batch_norm')
 
-        self._swish = Swish(name='swish')
+        out_channels = round_filters(32, self.global_params)
+        self._conv_stem = Conv2dSamePadding(
+            in_channels,
+            out_channels,
+            kernel_size=3,
+            stride=2,
+            bias=False,
+            name="stem_conv",
+        )
+        self._bn0 = BatchNorm2d(
+            num_features=out_channels,
+            momentum=batch_norm_momentum,
+            eps=batch_norm_epsilon,
+            name="stem_batch_norm",
+        )
+
+        self._swish = Swish(name="swish")
 
         # Build _blocks
         idx = 0
         self._blocks = nn.ModuleList([])
         for block_args in self.block_args_list:
-
             # Update block input and output filters based on depth multiplier.
             block_args = block_args._replace(
-                input_filters=round_filters(block_args.input_filters, self.global_params),
-                output_filters=round_filters(block_args.output_filters, self.global_params),
-                num_repeat=round_repeats(block_args.num_repeat, self.global_params)
+                input_filters=round_filters(
+                    block_args.input_filters, self.global_params
+                ),
+                output_filters=round_filters(
+                    block_args.output_filters, self.global_params
+                ),
+                num_repeat=round_repeats(block_args.num_repeat, self.global_params),
             )
 
             # The first block needs to take care of stride and filter size increase.
@@ -47,25 +63,29 @@ class EfficientNet(nn.Module):
             idx += 1
 
             if block_args.num_repeat > 1:
-                block_args = block_args._replace(input_filters=block_args.output_filters, strides=1)
+                block_args = block_args._replace(
+                    input_filters=block_args.output_filters, strides=1
+                )
 
             # The rest of the _blocks
             for _ in range(block_args.num_repeat - 1):
-                self._blocks.append(MBConvBlock(block_args, self.global_params, idx=idx))
+                self._blocks.append(
+                    MBConvBlock(block_args, self.global_params, idx=idx)
+                )
                 idx += 1
 
         # Head
         in_channels = block_args.output_filters  # output of final block
         out_channels = round_filters(1280, self.global_params)
-        self._conv_head = Conv2dSamePadding(in_channels,
-                                            out_channels,
-                                            kernel_size=1,
-                                            bias=False,
-                                            name='head_conv')
-        self._bn1 = BatchNorm2d(num_features=out_channels,
-                                momentum=batch_norm_momentum,
-                                eps=batch_norm_epsilon,
-                                name='head_batch_norm')
+        self._conv_head = Conv2dSamePadding(
+            in_channels, out_channels, kernel_size=1, bias=False, name="head_conv"
+        )
+        self._bn1 = BatchNorm2d(
+            num_features=out_channels,
+            momentum=batch_norm_momentum,
+            eps=batch_norm_epsilon,
+            name="head_batch_norm",
+        )
 
         # Final linear layer
         self.dropout_rate = self.global_params.dropout_rate
@@ -99,12 +119,19 @@ class EfficientNet(nn.Module):
         return x
 
     @classmethod
-    def from_name(cls, model_name, *, n_classes=1000, pretrained=False,in_channels):
-        return _get_model_by_name(model_name, classes=n_classes, pretrained=pretrained,in_channels=in_channels)
+    def from_name(cls, model_name, *, n_classes=1000, pretrained=False, in_channels):
+        return _get_model_by_name(
+            model_name,
+            classes=n_classes,
+            pretrained=pretrained,
+            in_channels=in_channels,
+        )
 
     @classmethod
-    def encoder(cls, model_name, *, pretrained=False,in_channels):
-        model = cls.from_name(model_name, pretrained=pretrained,in_channels=in_channels)
+    def encoder(cls, model_name, *, pretrained=False, in_channels):
+        model = cls.from_name(
+            model_name, pretrained=pretrained, in_channels=in_channels
+        )
 
         class Encoder(nn.Module):
             def __init__(self):
@@ -116,11 +143,11 @@ class EfficientNet(nn.Module):
 
                 self.stem_conv = model._conv_stem
                 self.stem_batch_norm = model._bn0
-                self.stem_swish = Swish(name='stem_swish')
+                self.stem_swish = Swish(name="stem_swish")
                 self.blocks = model._blocks
                 self.head_conv = model._conv_head
                 self.head_batch_norm = model._bn1
-                self.head_swish = Swish(name='head_swish')
+                self.head_swish = Swish(name="head_swish")
 
             def forward(self, x):
                 # Stem
@@ -148,6 +175,7 @@ class EfficientNet(nn.Module):
         if n_classes == 1000:
             return cls.from_name(model_name, n_classes=n_classes, pretrained=pretrained)
         else:
+
             class CustomHead(nn.Module):
                 def __init__(self, out_channels):
                     super().__init__()
@@ -156,9 +184,16 @@ class EfficientNet(nn.Module):
 
                 @property
                 def n_channels(self):
-                    n_channels_dict = {'efficientnet-b0': 1280, 'efficientnet-b1': 1280, 'efficientnet-b2': 1408,
-                                       'efficientnet-b3': 1536, 'efficientnet-b4': 1792, 'efficientnet-b5': 2048,
-                                       'efficientnet-b6': 2304, 'efficientnet-b7': 2560}
+                    n_channels_dict = {
+                        "efficientnet-b0": 1280,
+                        "efficientnet-b1": 1280,
+                        "efficientnet-b2": 1408,
+                        "efficientnet-b3": 1536,
+                        "efficientnet-b4": 1792,
+                        "efficientnet-b5": 2048,
+                        "efficientnet-b6": 2304,
+                        "efficientnet-b7": 2560,
+                    }
                     return n_channels_dict[self.encoder.name]
 
                 def forward(self, x):
@@ -174,22 +209,28 @@ class EfficientNet(nn.Module):
             return CustomHead(n_classes)
 
 
-def _get_model_by_name(model_name, classes=1000, pretrained=False,in_channels=4):
-    block_args_list, global_params = get_efficientnet_params(model_name, override_params={'num_classes': classes})
-    model = EfficientNet(in_channels,block_args_list, global_params)
+def _get_model_by_name(model_name, classes=1000, pretrained=False, in_channels=4):
+    block_args_list, global_params = get_efficientnet_params(
+        model_name, override_params={"num_classes": classes}
+    )
+    model = EfficientNet(in_channels, block_args_list, global_params)
     try:
         if pretrained:
-            pretrained_state_dict = load_state_dict_from_url(IMAGENET_WEIGHTS[model_name])
+            pretrained_state_dict = load_state_dict_from_url(
+                IMAGENET_WEIGHTS[model_name]
+            )
 
             if classes != 1000:
                 random_state_dict = model.state_dict()
-                pretrained_state_dict['_fc.weight'] = random_state_dict['_fc.weight']
-                pretrained_state_dict['_fc.bias'] = random_state_dict['_fc.bias']
+                pretrained_state_dict["_fc.weight"] = random_state_dict["_fc.weight"]
+                pretrained_state_dict["_fc.bias"] = random_state_dict["_fc.bias"]
 
             model.load_state_dict(pretrained_state_dict)
 
     except KeyError as e:
-        print(f"NOTE: Currently model {e} doesn't have pretrained weights, therefore a model with randomly initialized"
-              " weights is returned.")
+        print(
+            f"NOTE: Currently model {e} doesn't have pretrained weights, therefore a model with randomly initialized"
+            " weights is returned."
+        )
 
     return model
