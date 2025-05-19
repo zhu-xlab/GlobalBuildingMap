@@ -15,13 +15,17 @@ pip install -r requirements.txt
 ```
 
 ## Training
-please define data directory, checkpoint directory and log directory before running following command
+
+Please define data directory, checkpoint directory and log directory before running following command:
 ```
 python planet_training_demo.py
 ```
+Note that Planet data requires a license to download.
 
 ## Inferencing
-please define satellite image directory, prediction directory and prediction files' name before running following command
+
+Please define satellite image directory, prediction directory and prediction files' name before running following command:
 ```
 python planet_proc_inferDemo.py
 ```
+Example predictions for the African continent can be downloaded from: https://doi.org/10.14459/2024mp1764505.
