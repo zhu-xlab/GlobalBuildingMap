@@ -3,10 +3,9 @@ from torch import nn
 from torch.hub import load_state_dict_from_url
 from torch.nn import functional as F
 
-from .layers import BatchNorm2d, Conv2dSamePadding, MBConvBlock, Swish
+from .layers import BatchNorm2d, Conv2dSamePadding, MBConvBlock, Swish, custom_head
 from .utils import (
     IMAGENET_WEIGHTS,
-    custom_head,
     get_efficientnet_params,
     round_filters,
     round_repeats,
