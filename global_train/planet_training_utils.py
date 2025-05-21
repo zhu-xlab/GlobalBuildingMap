@@ -14,10 +14,10 @@ import sys
 import time
 
 import cv2
-import gdal
 import h5py
 import numpy as np
 import torch
+from osgeo import gdal
 from sklearn.metrics import confusion_matrix
 
 

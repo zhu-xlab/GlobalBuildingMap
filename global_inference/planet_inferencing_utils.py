@@ -14,8 +14,8 @@ import os
 import sys
 import time
 
-import gdal
 import numpy as np
+from osgeo import gdal
 
 
 def planet_infer_getDirs(rootDir):
