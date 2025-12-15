@@ -10,6 +10,12 @@ Visual comparison of building footprints from different data sources in Cairo, E
 
 While the PlanetScope imagery required to reproduce this effort is not publicly available due to licensing restrictions, a list of all 790,101 images used in this work can be found in the `assets/downloaded_items.txt` file. A GeoJSON file containing the bounding boxes of all processed images can also be found in `assets/merged_roi.geojson`. Note that Planet data requires a license to download.
 
+The predicted building masks are available on mediaTUM at https://doi.org/10.14459/2024MP1764505.002 under a CC-BY-4.0 license. The easiest way to download the dataset is with rsync:
+```
+export RSYNC_PASSWORD=m1764505.002
+rsync -av rsync://m1764505.002@dataserv.ub.tum.de/m1764505.002/ .
+```
+
 ## Installation
 
 All Python libraries needed to use this code can be installed using:
